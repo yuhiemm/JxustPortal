@@ -12,17 +12,21 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [x86_64, aarch64_generic]   # 同时构建 x86_64 和 ARM64
+        arch: [x86_64, aarch64_generic]  # 同时构建 x86_64 和 ARM64
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Setup OpenWrt SDK
         run: |
-          # 下载对应架构的 SDK
           mkdir sdk
           cd sdk
-          wget https://downloads.openwrt.org/releases/23.05.3/targets/${{ matrix.arch == 'x86_64' && 'x86/64' || 'armsr/armv8' }}/openwrt-sdk-23.05.3-${{ matrix.arch == 'x86_64' && 'x86-64' || 'armsr-armv8' }}_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+          if [ "${{ matrix.arch }}" = "x86_64" ]; then
+            SDK_URL="https://downloads.openwrt.org/releases/23.05.3/targets/x86/64/openwrt-sdk-23.05.3-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz"
+          else
+            SDK_URL="https://downloads.openwrt.org/releases/23.05.3/targets/armsr/armv8/openwrt-sdk-23.05.3-armsr-armv8_gcc-12.3.0_musl.Linux-x86_64.tar.xz"
+          fi
+          wget $SDK_URL
           tar -xJf openwrt-sdk-*.tar.xz --strip-components=1
 
       - name: Prepare environment
@@ -37,11 +41,13 @@ jobs:
       - name: Build package
         run: |
           cd sdk
+          # 生成默认配置，避免 menuconfig 交互
+          make defconfig
+          # 编译 luci 应用
           make package/luci-app-jxustportal/compile V=s
 
       - name: Upload IPK artifact
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-jxustportal-${{ matrix.arch }}
-          path: |
-            sdk/bin/packages/*/*/luci-app-jxustportal*.ipk
+          path: sdk/bin/packages/*/*/luci-app-jxustportal*.ipk
