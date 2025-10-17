@@ -1,0 +1,84 @@
+<%+header%>
+
+<style>
+.jxust-box {
+  max-width:480px;
+  margin:50px auto;
+  padding:24px;
+  background:#fff;
+  border-radius:12px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.08);
+}
+.jxust-box h2 { text-align:center; margin-bottom:16px; }
+.jxust-input { width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; }
+.jxust-row { display:flex; justify-content:space-between; gap:8px; }
+.jxust-row.wan-select {
+  display: block; /* 取消 flex 布局 */
+}
+.jxust-btn { width:48%; padding:10px; border-radius:8px; color:#fff; border:none; cursor:pointer; }
+.jxust-login { background:#28a745; }
+.jxust-logout { background:#dc3545; }
+.jxust-operator-label {
+  margin-right: 20px;
+  cursor: pointer;
+}
+.jxust-operator-radio {
+  margin-right: 5px;
+}
+</style>
+
+<div class="jxust-box">
+  <h2>JXUST Portal 登录控制台</h2>
+
+  <form method="post" action="<%=url('admin','services','jxustportal')%>">
+    
+
+
+    <input class="jxust-input" type="text" name="user" id="user" placeholder="账号" value="<%=user or ''%>" required />
+    
+    <input class="jxust-input" type="password" name="password" placeholder="密码" value="<%=pass or ''%>" required />
+
+    <label>
+      <input type="checkbox" name="remember" value="1" <% if remember and remember:match("1") then %>checked<% end %> />
+      记住账号密码
+    </label>
+
+        <!-- 运营商选择：小圆圈 -->
+<div class="jxust-row">
+    <label class="jxust-operator-label">
+        <input type="radio" name="operator" value="campus" class="jxust-operator-radio"
+       checked /> 校园网
+    </label>
+    <label class="jxust-operator-label">
+        <input type="radio" name="operator" value="cmcc" class="jxust-operator-radio"
+        /> 中国移动
+    </label>
+    <label class="jxust-operator-label">
+        <input type="radio" name="operator" value="unicom" class="jxust-operator-radio"
+        /> 中国联通
+    </label>
+    <label class="jxust-operator-label">
+        <input type="radio" name="operator" value="telecom" class="jxust-operator-radio"
+         /> 中国电信
+    </label>
+</div>
+
+
+
+
+    <div style="height:12px"></div>
+
+    <div class="jxust-row">
+      <button type="submit" name="action" value="login" class="jxust-btn jxust-login" >登录 Portal</button>
+      <button type="submit" name="action" value="logout" class="jxust-btn jxust-logout">注销 Portal</button>
+    </div>
+  </form>
+
+  <% if output and output~='' then %>
+    <hr/>
+    <h4>执行结果：</h4>
+    <pre><%=output%></pre>
+  <% end %>
+</div>
+
+<%+footer%>
