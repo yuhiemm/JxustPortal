@@ -1,0 +1,58 @@
+name: Build JXUST Portal LuCI IPK (ARM / ipq807x)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      SDK_URL: https://downloads.openwrt.org/releases/23.05.3/targets/ipq807x/generic/openwrt-sdk-23.05.3-ipq807x-generic_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ccache file g++ gawk gettext git libncurses5-dev \
+            libssl-dev python3 unzip wget xz-utils subversion
+
+      - name: Download and extract OpenWrt SDK
+        run: |
+          echo "SDK_URL=${SDK_URL}"
+          mkdir sdk && cd sdk
+          wget -q "$SDK_URL" -O sdk.tar.xz
+          tar -xf sdk.tar.xz
+          # move extracted dir to 'openwrt-sdk'
+          mv $(ls -d openwrt-sdk-* 2>/dev/null || true) openwrt-sdk || true
+          cd ..
+
+      - name: Copy package into SDK
+        run: |
+          SDKDIR=sdk/openwrt-sdk
+          if [ ! -d "$SDKDIR" ]; then
+            echo "SDK not found in $SDKDIR"
+            ls -la sdk
+            exit 1
+          fi
+          cp -r luci "$SDKDIR"/package/luci-app-jxustportal_src
+          cp Makefile "$SDKDIR"/package/luci-app-jxustportal_src/
+
+      - name: Prepare feeds & build package
+        run: |
+          cd sdk/openwrt-sdk
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+          # 如果你只想编译这个包：运行 package/.../compile
+          make package/luci-app-jxustportal_src/compile V=s
+
+      - name: Upload artifacts (ipk)
+        uses: actions/upload-artifact@v4
+        with:
+          name: jxustportal-ipk
+          path: sdk/openwrt-sdk/bin/packages/**/luci-app-jxustportal*.ipk
